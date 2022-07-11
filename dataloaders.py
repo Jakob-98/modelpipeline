@@ -36,15 +36,17 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.plugins import DDPPlugin
 import pytorch_lightning as pl
 import torchvision.utils as vutils
-from torch import optim
+from torch import optim, Tensor
+from kornia.augmentation import ColorJitter, RandomChannelShuffle, RandomHorizontalFlip, RandomThinPlateSpline
 
 
 
 class DatasetLoader(Dataset):
-    def __init__(self, imagepath, labelpath, histlbppath, nclass):
+    def __init__(self, transforms, imagepath, labelpath, histlbppath, nclass):
         self.imagepath = imagepath
         self.labelpath = labelpath
         self.histlbppath = histlbppath
+        self.transforms = transforms
         self.nclass = nclass 
         self.imageids = sorted([os.path.basename(p).split('.jpg')[0] for p in glob.glob(imagepath + '/*.jpg')])
 
@@ -63,12 +65,43 @@ class DatasetLoader(Dataset):
         img = np.array(Image.open(os.path.join(self.imagepath, imageId + '.jpg')).convert('RGB'))
         img, target, histlbp = torch.Tensor(img).permute(2,0,1), torch.Tensor(target), torch.Tensor(histlbp)
         # return img, target
+        img = torch.squeeze(self.transforms(img))
         return img, histlbp, target 
 
 
     def __len__(self):
         return len(self.imageids)
 
+class Preprocess(nn.Module):
+    """Module to perform pre-process using Kornia on torch tensors."""
+
+    @torch.no_grad()  # disable gradients for effiency
+    def forward(self, x) -> Tensor:
+        x_tmp: np.ndarray = np.array(x)  # HxWxC
+        x_out: Tensor = image_to_tensor(x_tmp, keepdim=True)  # CxHxW
+        return x_out.float() / 255.0
+
+class DataAugmentation(nn.Module):
+    """Module to perform data augmentation using Kornia on torch tensors."""
+
+    def __init__(self, apply_color_jitter: bool = False) -> None:
+        super().__init__()
+        self._apply_color_jitter = apply_color_jitter
+
+        self.transforms = nn.Sequential(
+            RandomHorizontalFlip(p=0.75),
+            RandomChannelShuffle(p=0.75),
+            RandomThinPlateSpline(p=0.75),
+        )
+
+        self.jitter = ColorJitter(0.5, 0.5, 0.5, 0.5)
+
+    @torch.no_grad()  # disable gradients for effiency
+    def forward(self, x: Tensor) -> Tensor:
+        x_out = self.transforms(x)  # BxCxHxW
+        if self._apply_color_jitter:
+            x_out = self.jitter(x_out)
+        return x_out
 
 class DataModuleCustom(pl.LightningDataModule):
     def __init__(
@@ -91,19 +124,20 @@ class DataModuleCustom(pl.LightningDataModule):
         self.valhistlbppath = valhistlbppath
         self.vallabelpath = vallabelpath
         self.valimagepath = valimagepath
+        self.transform = DataAugmentation()
 
     def setup(self, stage: Optional[str] = None) -> None:
         
         self.train_dataset = DatasetLoader(
-            histlbppath=self.trainhistlbppath, imagepath=self.trainimagepath, labelpath=self.trainlabelpath, nclass=self.nclass
+            transforms=self.transform, histlbppath=self.trainhistlbppath, imagepath=self.trainimagepath, labelpath=self.trainlabelpath, nclass=self.nclass
         )
 
         self.val_dataset= DatasetLoader(
-            histlbppath=self.valhistlbppath, imagepath=self.valimagepath, labelpath=self.vallabelpath, nclass=self.nclass
+            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath=self.valimagepath, labelpath=self.vallabelpath, nclass=self.nclass
         )
 
         self.test_dataset= DatasetLoader(
-            histlbppath=self.valhistlbppath, imagepath=self.valimagepath, labelpath=self.vallabelpath, nclass=self.nclass
+            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath=self.valimagepath, labelpath=self.vallabelpath, nclass=self.nclass
         )
 
 

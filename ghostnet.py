@@ -178,16 +178,16 @@ class HistLBPNet(nn.Module):
 
     def forward(self, x):
         x = self.fc1(x)
-        # x = F.dropout(x, self.dropout)
+        x = F.dropout(x, self.dropout)
         x = F.relu(x)
         x = self.fc2(x)
-        # x = F.dropout(x, self.dropout)
+        x = F.dropout(x, self.dropout)
         x = F.relu(x)
         return x
 
 
 class GhostNet(nn.Module):
-    def __init__(self, cfgs, num_classes=1000, width=1.0, dropout=0.2, histlbpoutdim = 40, enable_histlbp=False):
+    def __init__(self, cfgs, num_classes=1000, width=1.0, dropout=0.2, histlbpoutdim = 320, enable_histlbp=False):
         super(GhostNet, self).__init__()
         # setting of inverted residual blocks
         self.cfgs = cfgs

@@ -29,7 +29,7 @@ datamodule = dataloaders.DataModuleCustom(
     trainlabelpath=config.label_path, valhistlbppath=config.val_histlbp_path, valimagepath=config.val_image_path, vallabelpath=config.val_label_path ,nclass=config.nclass)
 
 # %%
-model = ghostnet.ghostnet(num_classes = config.nclass)
+model = ghostnet.ghostnet(num_classes = config.nclass, enable_histlbp=True)
 # model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 loss = nn.CrossEntropyLoss()
