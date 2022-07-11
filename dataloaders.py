@@ -61,9 +61,9 @@ class DatasetLoader(Dataset):
             target = f.readline()[0]
         target=self.one_hot(int(target))
         img = np.array(Image.open(os.path.join(self.imagepath, imageId + '.jpg')).convert('RGB'))
-
-        img, target, histlbp = torch.Tensor(img), torch.Tensor(target), torch.Tensor(histlbp)
-        return (img, histlbp), target 
+        img, target, histlbp = torch.Tensor(img).permute(2,0,1), torch.Tensor(target), torch.Tensor(histlbp)
+        # return img, target
+        return img, histlbp, target 
 
 
     def __len__(self):
@@ -76,22 +76,37 @@ class DataModuleCustom(pl.LightningDataModule):
         nclass,
         trainhistlbppath,
         trainlabelpath,
-        trainimagepath 
+        trainimagepath,
+        valhistlbppath,
+        vallabelpath,
+        valimagepath
     ):
         super().__init__()
         self.train_batch_size = 16
-        self.num_workers = 2
+        self.num_workers = 1
         self.nclass = nclass
         self.trainhistlbppath = trainhistlbppath
         self.trainlabelpath = trainlabelpath
         self.trainimagepath = trainimagepath
+        self.valhistlbppath = valhistlbppath
+        self.vallabelpath = vallabelpath
+        self.valimagepath = valimagepath
 
     def setup(self, stage: Optional[str] = None) -> None:
         
         self.train_dataset = DatasetLoader(
             histlbppath=self.trainhistlbppath, imagepath=self.trainimagepath, labelpath=self.trainlabelpath, nclass=self.nclass
         )
-        
+
+        self.val_dataset= DatasetLoader(
+            histlbppath=self.valhistlbppath, imagepath=self.valimagepath, labelpath=self.vallabelpath, nclass=self.nclass
+        )
+
+        self.test_dataset= DatasetLoader(
+            histlbppath=self.valhistlbppath, imagepath=self.valimagepath, labelpath=self.vallabelpath, nclass=self.nclass
+        )
+
+
         # self.val_dataset = ENA(
         # )
 
@@ -102,9 +117,21 @@ class DataModuleCustom(pl.LightningDataModule):
         return DataLoader(
             self.train_dataset,
             batch_size=self.train_batch_size,
-            num_workers=self.num_workers,
-            shuffle=True,
+            # num_workers=self.num_workers,
+            # shuffle=True,
         )
+
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.val_dataset,
+            batch_size = self.train_batch_size
+        )
+    def test_dataloader(self):
+        return DataLoader(
+            self.val_dataset,
+            batch_size = self.train_batch_size
+        )
+
 
     # def val_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
     #     return DataLoader(

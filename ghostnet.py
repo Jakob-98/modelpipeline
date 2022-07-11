@@ -162,10 +162,10 @@ class GhostBottleneck(nn.Module):
         return x
 
 class HistLBPNet(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, outdim) -> None:
         super(HistLBPNet, self).__init__()
         self.indim = 804
-        self.outdim = 20
+        self.outdim = outdim
         self.dropout = 0.3
 
         self.fc1 = nn.Sequential(
@@ -176,18 +176,18 @@ class HistLBPNet(nn.Module):
             nn.Linear(120, self.outdim), 
         )
 
-        def forward(self, x):
-            x = self.fc1(x)
-            x = F.dropout(x, self.dropout)
-            x = F.relu(x)
-            x = self.fc2(x)
-            x = F.dropout(x, self.dropout)
-            x = F.relu(x)
-            return x
+    def forward(self, x):
+        x = self.fc1(x)
+        # x = F.dropout(x, self.dropout)
+        x = F.relu(x)
+        x = self.fc2(x)
+        # x = F.dropout(x, self.dropout)
+        x = F.relu(x)
+        return x
 
 
 class GhostNet(nn.Module):
-    def __init__(self, cfgs, num_classes=1000, width=1.0, dropout=0.2):
+    def __init__(self, cfgs, num_classes=1000, width=1.0, dropout=0.2, histlbpoutdim = 40):
         super(GhostNet, self).__init__()
         # setting of inverted residual blocks
         self.cfgs = cfgs
@@ -198,7 +198,8 @@ class GhostNet(nn.Module):
         self.conv_stem = nn.Conv2d(3, output_channel, 3, 2, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(output_channel)
         self.act1 = nn.ReLU(inplace=True)
-        self.histlbpnet = HistLBPNet()
+        self.histlbpnet = HistLBPNet(outdim = histlbpoutdim)
+        self.histlbpoutdim = histlbpoutdim
         input_channel = output_channel
 
         # building inverted residual blocks
@@ -225,9 +226,10 @@ class GhostNet(nn.Module):
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.conv_head = nn.Conv2d(input_channel, output_channel, 1, 1, 0, bias=True)
         self.act2 = nn.ReLU(inplace=True)
-        self.classifier = nn.Linear(output_channel, num_classes)
+        self.classifier = nn.Linear(output_channel + self.histlbpoutdim, num_classes)
 
-    def forward(self, x):
+    def forward(self, x, z):
+        x, lbphist = x, z
         x = self.conv_stem(x)
         x = self.bn1(x)
         x = self.act1(x)
@@ -235,7 +237,9 @@ class GhostNet(nn.Module):
         x = self.global_pool(x)
         x = self.conv_head(x)
         x = self.act2(x)
+        x_lbphist = self.histlbpnet(lbphist)
         x = x.view(x.size(0), -1)
+        x = torch.cat((x, x_lbphist), dim=1)
         if self.dropout> 0.:
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.classifier(x)
