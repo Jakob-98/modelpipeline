@@ -6,8 +6,10 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import pandas as pd
 from torchmetrics import ConfusionMatrix
+from torchmetrics.functional import accuracy
 import numpy as np
-
+import io
+import torchvision
 
 class Experiment(pl.LightningModule):
     def __init__(self, model, loss) -> None:
@@ -21,25 +23,34 @@ class Experiment(pl.LightningModule):
         return self.model(input)
 
     def training_step(self, batch, batch_idx):
-        x, z, y = batch
-        y_hat = self.model(x,z )
-        loss = self.loss(y_hat, y)
-        return loss
+        loss, pred_labels, true_labels, y, y_hat = self._shared_eval_step(batch, batch_idx)
+        acc = accuracy(pred_labels, true_labels)
+        metrics = {"loss": loss, 'acc': acc} 
+        self.log_dict(metrics)
+        return metrics
     
     def validation_step(self, batch, batch_idx, optimizer_idx = 0):
+        loss, pred_labels, true_labels, y, y_hat = self._shared_eval_step(batch, batch_idx)
+        acc = accuracy(pred_labels, true_labels)
+        metrics = {"val_loss": loss, 'val_acc': acc} 
+        self.log_dict(metrics)
+        # self.val_confusion.update(pred_labels, true_labels)
+        return metrics
+
+    def _shared_eval_step(self, batch, batchidx):
         x, z, y = batch
-        y_hat = self.model(x,z )
+        y_hat = self.model(x,z)
         loss = self.loss(y_hat, y)
-        values = {"loss": loss, "pred": y_hat} 
-        self.log_dict(values)
-        # self.val_confusion.update(y_hat, y)
-        return {"loss": loss, "pred": y_hat, 'labels': y} 
+        pred_labels = torch.argmax(y_hat, axis=1)
+        true_labels = torch.argmax(y, axis=1)
+        return loss, pred_labels, true_labels, y_hat, y
 
 
     # def validation_step_end(self, outputs):
     #     return outputs
 
     # def validation_epoch_end(self, outs):
+    #     # https://stackoverflow.com/questions/65498782/how-to-dump-confusion-matrix-using-tensorboard-logger-in-pytorch-lightning
     #     tb = self.logger.experiment
 
     #     # confusion matrix
@@ -56,7 +67,7 @@ class Experiment(pl.LightningModule):
     #     plt.savefig(buf, format='jpeg')
     #     buf.seek(0)
     #     im = Image.open(buf)
-    #     im = torch.ToTensor()(im)
+    #     im = torchvision.transforms.ToTensor()(im)
     #     tb.add_image("val_confusion_matrix", im, global_step=self.current_epoch)
 
     def test_step(self, batch, batch_idx, optimizer_idx = 0):

@@ -30,17 +30,21 @@ datamodule = dataloaders.DataModuleCustom(
 
 # %%
 model = ghostnet.ghostnet(num_classes = config.nclass)
-# torch.save(model.state_dict(), './model.pt')
-model.load_state_dict(torch.load('./model.pt'))
+# model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 loss = nn.CrossEntropyLoss()
 ex = experiment.Experiment(model, loss)
-trainer = pl.Trainer(max_epochs=3, accelerator='gpu', logger=wandb_logger)
+trainer = pl.Trainer(max_epochs=56, accelerator='gpu', logger=wandb_logger)
 # %%
-datamodule.setup()
-# trainer.fit(ex, train_dataloaders=datamodule)
-trainer.validate(ex, datamodule=datamodule, verbose=True)
-# %%
+import traceback
+try:
+    datamodule.setup()
+    trainer.fit(ex, train_dataloaders=datamodule)
+except Exception as err:
+    print(traceback.format_exc())
+torch.save(model.state_dict(), './model.pt')
+# trainer.validate(ex, datamodule=datamodule, verbose=True)
+    # %%
 traindl = datamodule.train_dataloader()
 # %%
 batch = next(iter(traindl))

@@ -187,7 +187,7 @@ class HistLBPNet(nn.Module):
 
 
 class GhostNet(nn.Module):
-    def __init__(self, cfgs, num_classes=1000, width=1.0, dropout=0.2, histlbpoutdim = 40):
+    def __init__(self, cfgs, num_classes=1000, width=1.0, dropout=0.2, histlbpoutdim = 40, enable_histlbp=False):
         super(GhostNet, self).__init__()
         # setting of inverted residual blocks
         self.cfgs = cfgs
@@ -198,8 +198,9 @@ class GhostNet(nn.Module):
         self.conv_stem = nn.Conv2d(3, output_channel, 3, 2, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(output_channel)
         self.act1 = nn.ReLU(inplace=True)
-        self.histlbpnet = HistLBPNet(outdim = histlbpoutdim)
-        self.histlbpoutdim = histlbpoutdim
+        self.histlbpnet = HistLBPNet(outdim = histlbpoutdim) if enable_histlbp else None
+        self.enable_histlbp = enable_histlbp
+        self.histlbpoutdim = histlbpoutdim if enable_histlbp else 0
         input_channel = output_channel
 
         # building inverted residual blocks
@@ -237,9 +238,12 @@ class GhostNet(nn.Module):
         x = self.global_pool(x)
         x = self.conv_head(x)
         x = self.act2(x)
-        x_lbphist = self.histlbpnet(lbphist)
-        x = x.view(x.size(0), -1)
-        x = torch.cat((x, x_lbphist), dim=1)
+        if self.enable_histlbp: 
+            x_lbphist = self.histlbpnet(lbphist)
+            x = x.view(x.size(0), -1)
+            x = torch.cat((x, x_lbphist), dim=1)
+        else: 
+            x = x.view(x.size(0), -1)
         if self.dropout> 0.:
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.classifier(x)
