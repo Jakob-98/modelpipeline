@@ -187,7 +187,7 @@ class HistLBPNet(nn.Module):
 
 
 class GhostNet(nn.Module):
-    def __init__(self, cfgs, num_classes=1000, width=1.0, dropout=0.2, histlbpoutdim = 320, enable_histlbp=True, enable_skipconnection=False):
+    def __init__(self, cfgs, num_classes=1000, width=1.0, dropout=0.2):
         super(GhostNet, self).__init__()
         # setting of inverted residual blocks
         self.cfgs = cfgs
@@ -198,10 +198,6 @@ class GhostNet(nn.Module):
         self.conv_stem = nn.Conv2d(3, output_channel, 3, 2, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(output_channel)
         self.act1 = nn.ReLU(inplace=True)
-        self.histlbpnet = HistLBPNet(outdim = histlbpoutdim) if enable_histlbp else None
-        self.enable_histlbp = enable_histlbp
-        self.histlbpoutdim = histlbpoutdim if enable_histlbp else 0
-        self.enable_skipconnection = enable_skipconnection
         input_channel = output_channel
         print('!warning GhostNet: enable_skipconnection is hardcoded in the input channel of final layer!')
 
@@ -229,10 +225,8 @@ class GhostNet(nn.Module):
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.conv_head = nn.Conv2d(input_channel, output_channel, 1, 1, 0, bias=True)
         self.act2 = nn.ReLU(inplace=True)
-        self.classifier = nn.Linear(output_channel + self.histlbpoutdim + 804, num_classes)
 
-    def forward(self, x, z):
-        x, lbphist = x, z
+    def forward(self, x):
         x = self.conv_stem(x)
         x = self.bn1(x)
         x = self.act1(x)
@@ -240,16 +234,23 @@ class GhostNet(nn.Module):
         x = self.global_pool(x)
         x = self.conv_head(x)
         x = self.act2(x)
-        if self.enable_histlbp: 
-            x_lbphist = self.histlbpnet(lbphist)
-            x = x.view(x.size(0), -1)
-            x = torch.cat((x, x_lbphist), dim=1)
-            if self.enable_skipconnection:
-                x = torch.cat((x, lbphist), dim=1)
-        else: 
-            x = x.view(x.size(0), -1)
+        x = x.view(x.size(0), -1)
         if self.dropout> 0.:
             x = F.dropout(x, p=self.dropout, training=self.training)
+        return x
+
+
+class DualGhostNet(nn.Module):
+    def __init__(self, num_classes=6) -> None:
+        super(DualGhostNet).__init__()
+        self.ghostnet1 = GhostNet(num_classes=num_classes)
+        self.ghostnet1 = GhostNet(num_classes=num_classes)
+        self.classifier = nn.Linear(2560, num_classes)
+
+    def forward(self, x1, x2):
+        x1 = self.ghostnet1(x1)
+        x2  = self.ghostnet2(x2)
+        x = torch.cat((x1, x2), dim=1)
         x = self.classifier(x)
         return x
 

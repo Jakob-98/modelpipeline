@@ -14,16 +14,16 @@ from pytorch_lightning.loggers import WandbLogger
 import torch
 
 class config:
-    image_path = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
+    image_path1 = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
     label_path = "C:/temp/ispipeline/labels/224xCropRGBTrain5/"
     histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBTrain5/"
-    val_image_path = "C:/temp/ispipeline/images/224xCropRGBval20"
+    val_image_path1 = "C:/temp/ispipeline/images/224xCropRGBval20"
     val_label_path = "C:/temp/ispipeline/labels/224xCropRGBval20/"
     val_histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBval20/"
-    # image_path = "C:/temp/ispipeline/images/224xSeqRGBTrain5/"
+    image_path2 = "C:/temp/ispipeline/images/224xSeqRGBTrain5/"
     # label_path = "C:/temp/ispipeline/labels/224xSeqRGBTrain5/"
     # histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBTrain5/"
-    # val_image_path = "C:/temp/ispipeline/images/224xSeqRGBval20"
+    val_image_path2 = "C:/temp/ispipeline/images/224xSeqRGBval20"
     # val_label_path = "C:/temp/ispipeline/labels/224xSeqRGBval20/"
     # val_histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBval20/"
     image_size = 224
