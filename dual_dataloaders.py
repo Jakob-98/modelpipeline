@@ -140,7 +140,7 @@ class DataModuleCustom(pl.LightningDataModule):
         )
 
         self.val_dataset= DatasetLoader(
-            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath2=self.valimagepath2, imagepath1=self.trainimagepath1, labelpath=self.vallabelpath, nclass=self.nclass
+            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath2=self.valimagepath2, imagepath1=self.valimagepath2, labelpath=self.vallabelpath, nclass=self.nclass
         )
 
         self.test_dataset= DatasetLoader(

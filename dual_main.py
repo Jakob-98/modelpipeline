@@ -1,12 +1,12 @@
 # %%
-import dataloaders
+import dual_dataloaders
 # from ghostnet import ghostnet
-import ghostnet
+import dual_ghostnet
 from importlib import reload
-import experiment
-reload(dataloaders)
-reload(ghostnet)
-reload(experiment)
+import dual_experiment
+reload(dual_dataloaders)
+reload(dual_ghostnet)
+reload(dual_experiment)
 # from experiment import Experiment
 import torch.nn as nn
 import pytorch_lightning as pl
@@ -30,16 +30,16 @@ class config:
     nclass = 6
 
 wandb_logger = WandbLogger()
-datamodule = dataloaders.DataModuleCustom(
-    trainhistlbppath=config.histlbp_path, trainimagepath=config.image_path, 
-    trainlabelpath=config.label_path, valhistlbppath=config.val_histlbp_path, valimagepath=config.val_image_path, vallabelpath=config.val_label_path ,nclass=config.nclass)
+datamodule = dual_dataloaders.DataModuleCustom(
+    trainhistlbppath=config.histlbp_path, trainimagepath2=config.image_path2, trainimagepath1=config.image_path1, 
+    trainlabelpath=config.label_path, valhistlbppath=config.val_histlbp_path, valimagepath1=config.val_image_path1, valimagepath2=config.val_image_path2, vallabelpath=config.val_label_path ,nclass=config.nclass)
 
 # %%
-model = ghostnet.ghostnet(num_classes = config.nclass, enable_histlbp=True)
+model = dual_ghostnet.DualGhostNet(num_classes = config.nclass)
 # model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 loss = nn.CrossEntropyLoss()
-ex = experiment.Experiment(model, loss)
+ex = dual_experiment.Experiment(model, loss)
 trainer = pl.Trainer(max_epochs=56, accelerator='gpu', logger=wandb_logger)
 # %%
 import traceback

@@ -12,9 +12,6 @@ import torch.nn.functional as F
 import math
 
 
-__all__ = ['ghost_net']
-
-
 def _make_divisible(v, divisor, min_value=None):
     """
     This function is taken from the original tf repo.
@@ -240,21 +237,6 @@ class GhostNet(nn.Module):
         return x
 
 
-class DualGhostNet(nn.Module):
-    def __init__(self, num_classes=6) -> None:
-        super(DualGhostNet).__init__()
-        self.ghostnet1 = GhostNet(num_classes=num_classes)
-        self.ghostnet1 = GhostNet(num_classes=num_classes)
-        self.classifier = nn.Linear(2560, num_classes)
-
-    def forward(self, x1, x2):
-        x1 = self.ghostnet1(x1)
-        x2  = self.ghostnet2(x2)
-        x = torch.cat((x1, x2), dim=1)
-        x = self.classifier(x)
-        return x
-
-
 def ghostnet(**kwargs):
     """
     Constructs a GhostNet model
@@ -286,3 +268,18 @@ def ghostnet(**kwargs):
         ]
     ]
     return GhostNet(cfgs, **kwargs)
+
+
+class DualGhostNet(nn.Module):
+    def __init__(self, num_classes=6) -> None:
+        super(DualGhostNet, self).__init__()
+        self.ghostnet1 = ghostnet(num_classes=num_classes)
+        self.ghostnet2 = ghostnet(num_classes=num_classes)
+        self.classifier = nn.Linear(2560, num_classes)
+
+    def forward(self, x1, x2):
+        x1 = self.ghostnet1(x1)
+        x2  = self.ghostnet2(x2)
+        x = torch.cat((x1, x2), dim=1)
+        x = self.classifier(x)
+        return x
