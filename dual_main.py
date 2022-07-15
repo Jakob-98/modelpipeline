@@ -48,7 +48,9 @@ try:
     trainer.fit(ex, train_dataloaders=datamodule)
 except Exception as err:
     print(traceback.format_exc())
-torch.save(model.state_dict(), './model.pt')
+
+#%%
+torch.save(model.state_dict(), './modeldual_12epochs.pt')
 #%%%
 
 trainer.validate(ex, datamodule=datamodule, verbose=True)
