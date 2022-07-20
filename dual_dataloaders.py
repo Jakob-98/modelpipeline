@@ -67,7 +67,7 @@ class DatasetLoader(Dataset):
         img2 = np.array(Image.open(os.path.join(self.imagepath2, imageId + '.jpg')).convert('RGB'))
         img1, img2, target, histlbp = torch.Tensor(img1).permute(2,0,1), torch.Tensor(img2).permute(2,0,1), torch.Tensor(target), torch.Tensor(histlbp)
         # return img, target
-        img1, img2 = torch.squeeze(self.transforms(img2)), torch.squeeze(self.transforms(img1))
+        img1, img2 = torch.squeeze(self.transforms(img1)), torch.squeeze(self.transforms(img2))
         return img1, img2, histlbp, target 
 
 
@@ -140,7 +140,7 @@ class DataModuleCustom(pl.LightningDataModule):
         )
 
         self.val_dataset= DatasetLoader(
-            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath2=self.valimagepath2, imagepath1=self.valimagepath2, labelpath=self.vallabelpath, nclass=self.nclass
+            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath2=self.valimagepath2, imagepath1=self.valimagepath1, labelpath=self.vallabelpath, nclass=self.nclass
         )
 
         self.test_dataset= DatasetLoader(

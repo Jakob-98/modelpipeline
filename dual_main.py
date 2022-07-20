@@ -1,4 +1,9 @@
 # %%
+import traceback
+import torch
+from pytorch_lightning.loggers import WandbLogger
+import pytorch_lightning as pl
+import torch.nn as nn
 import dual_dataloaders
 # from ghostnet import ghostnet
 import dual_ghostnet
@@ -8,10 +13,7 @@ reload(dual_dataloaders)
 reload(dual_ghostnet)
 reload(dual_experiment)
 # from experiment import Experiment
-import torch.nn as nn
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
-import torch
+
 
 class config:
     image_path1 = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
@@ -29,38 +31,37 @@ class config:
     image_size = 224
     nclass = 6
 
+
 wandb_logger = WandbLogger()
 datamodule = dual_dataloaders.DataModuleCustom(
-    trainhistlbppath=config.histlbp_path, trainimagepath2=config.image_path2, trainimagepath1=config.image_path1, 
-    trainlabelpath=config.label_path, valhistlbppath=config.val_histlbp_path, valimagepath1=config.val_image_path1, valimagepath2=config.val_image_path2, vallabelpath=config.val_label_path ,nclass=config.nclass)
+    trainhistlbppath=config.histlbp_path, trainimagepath2=config.image_path2,
+    trainimagepath1=config.image_path1, trainlabelpath=config.label_path,
+    valhistlbppath=config.val_histlbp_path, valimagepath1=config.val_image_path1,
+    valimagepath2=config.val_image_path2, vallabelpath=config.val_label_path,
+    nclass=config.nclass)
 
 # %%
-model = dual_ghostnet.DualGhostNet(num_classes = config.nclass)
+model = dual_ghostnet.DualGhostNet(num_classes=config.nclass)
 # model.load_state_dict(torch.load('./model.pt'))
-model.eval()
+# model.eval()
 loss = nn.CrossEntropyLoss()
 ex = dual_experiment.Experiment(model, loss)
 trainer = pl.Trainer(max_epochs=56, accelerator='gpu', logger=wandb_logger)
 # %%
-import traceback
 try:
     datamodule.setup()
     trainer.fit(ex, train_dataloaders=datamodule)
 except Exception as err:
     print(traceback.format_exc())
 
-#%%
+# %%
 torch.save(model.state_dict(), './modeldual_12epochs.pt')
-#%%%
+# %%%
 
 trainer.validate(ex, datamodule=datamodule, verbose=True)
 
 
-
-
-
-
-### USELESS
+# USELESS
 # %%
 traindl = datamodule.train_dataloader()
 # %%

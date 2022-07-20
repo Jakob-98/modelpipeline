@@ -10,32 +10,41 @@ from torchmetrics.functional import accuracy
 import numpy as np
 import io
 import torchvision
+import torchmetrics
+import wandb
+import seaborn as sns
 
 class Experiment(pl.LightningModule):
-    def __init__(self, model, loss) -> None:
+    def __init__(self, model, loss, n_classes) -> None:
         super().__init__()
 
         self.model = model
+        self.n_classes = n_classes
         self.loss = loss
         self.val_confusion = ConfusionMatrix(num_classes=6)#self._config.n_clusters)
+        self.train_acc = torchmetrics.Accuracy()
+        self.train_f1 = torchmetrics.F1Score(number_classes=6,
+        average="micro")
+        self.train_auroc = torchmetrics.AUROC(num_classes=6,
+        average="micro")
+        self.val_acc = torchmetrics.Accuracy()
+        self.val_f1 = torchmetrics.F1Score(number_classes=6,
+        average="micro")
+        self.val_auroc = torchmetrics.AUROC(num_classes=6,
+        average="micro")
     
     def forward(self, input):
         return self.model(input)
 
     def training_step(self, batch, batch_idx):
         loss, pred_labels, true_labels, y, y_hat = self._shared_eval_step(batch, batch_idx)
-        acc = accuracy(pred_labels, true_labels)
-        metrics = {"loss": loss, 'acc': acc} 
-        self.log_dict(metrics)
-        return metrics
+        self._update_metrics(train=True, ytrue=true_labels, ypred=pred_labels)
+        return {'loss': loss}
     
     def validation_step(self, batch, batch_idx, optimizer_idx = 0):
         loss, pred_labels, true_labels, y, y_hat = self._shared_eval_step(batch, batch_idx)
-        acc = accuracy(pred_labels, true_labels)
-        metrics = {"val_loss": loss, 'val_acc': acc} 
-        self.log_dict(metrics)
-        # self.val_confusion.update(pred_labels, true_labels)
-        return metrics
+        self._update_metrics(train=False, ytrue=true_labels, ypred=pred_labels)
+        return {"val_loss": loss}
 
     def _shared_eval_step(self, batch, batchidx):
         x, z, y = batch
@@ -45,30 +54,52 @@ class Experiment(pl.LightningModule):
         true_labels = torch.argmax(y, axis=1)
         return loss, pred_labels, true_labels, y_hat, y
 
+    def _update_metrics(self, train: bool, ytrue, ypred):
+        if train:
+            self.train_acc.update(ypred, ytrue)
+            self.train_f1.update(ypred, ytrue)
+        else:
+            self.val_acc.update(ypred, ytrue)
+            self.val_f1.update(ypred, ytrue)
+            self.val_confusion(ypred, ytrue)
 
-    # def validation_step_end(self, outputs):
-    #     return outputs
+    def validation_epoch_end(self, outputs):
+        avg_loss = torch.stack([x["val_loss"] for x in outputs]).mean()
+        avg_acc = self.val_acc.compute()
+        avg_f1 = self.val_f1.compute()
+        conf_matrix = self.val_confusion.compute()
+        # reset metrics
+        self.val_acc.reset()
+        self.val_f1.reset()
+        # log metrics\
+        self.log("val_loss", avg_loss, prog_bar=True)
+        self.log("val_acc", avg_acc, prog_bar=True)
+        self.log("val_f1", avg_f1, prog_bar=True)
+        self.log('confusion_matrix', conf_matrix)
 
-    # def validation_epoch_end(self, outs):
-    #     # https://stackoverflow.com/questions/65498782/how-to-dump-confusion-matrix-using-tensorboard-logger-in-pytorch-lightning
-    #     tb = self.logger.experiment
-
-    #     # confusion matrix
-    #     conf_mat = self.val_confusion.compute().detach().cpu().numpy().astype(np.int)
-    #     df_cm = pd.DataFrame(
-    #         conf_mat,
-    #         index=np.arange(6),#self._config.n_clusters),
-    #         columns=np.arange(6))#self._config.n_clusters))
-    #     plt.figure()
-    #     sn.set(font_scale=1.2)
-    #     sn.heatmap(df_cm, annot=True, annot_kws={"size": 16}, fmt='d')
-    #     buf = io.BytesIO()
+        df_cm = pd.DataFrame(conf_matrix.cpu().numpy(), index = range(self.n_classes), columns=range(self.n_classes))
+        plt.figure(figsize = (10,7))
+        fig_ = sns.heatmap(df_cm, annot=True, cmap='Spectral').get_figure()
+        plt.close(fig_)
         
-    #     plt.savefig(buf, format='jpeg')
-    #     buf.seek(0)
-    #     im = Image.open(buf)
-    #     im = torchvision.transforms.ToTensor()(im)
-    #     tb.add_image("val_confusion_matrix", im, global_step=self.current_epoch)
+        wandb.log({'conf' :wandb.Image(fig_, caption="Confusion Matrix")})
+
+
+        return {"val_loss": avg_loss, "val_acc": avg_acc, "val_f1": avg_f1, "confusion_matrix": conf_matrix}
+
+
+    def train_epoch_end(self, outputs):
+        avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
+        avg_acc = self.train_acc.compute()
+        avg_f1 = self.train_f1.compute()
+        # reset metrics
+        self.train_acc.reset()
+        self.train_f1.reset()
+        # log metrics
+        self.log("train_loss", avg_loss, prog_bar=True)
+        self.log("train_acc", avg_acc, prog_bar=True)
+        self.log("train_f1", avg_f1, prog_bar=True)
+        return {"train_loss": avg_loss, "train_acc": avg_acc, "train_f1": avg_f1}
 
     def test_step(self, batch, batch_idx, optimizer_idx = 0):
         x, z, y = batch

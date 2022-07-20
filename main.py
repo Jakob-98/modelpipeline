@@ -14,12 +14,18 @@ from pytorch_lightning.loggers import WandbLogger
 import torch
 
 class config:
-    image_path = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
-    label_path = "C:/temp/ispipeline/labels/224xCropRGBTrain5/"
-    histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBTrain5/"
-    val_image_path = "C:/temp/ispipeline/images/224xCropRGBval20"
-    val_label_path = "C:/temp/ispipeline/labels/224xCropRGBval20/"
-    val_histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBval20/"
+    image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBTrain5"
+    label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBTrain5"
+    histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBTrain5"
+    val_image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBVal"
+    val_label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBVal" 
+    val_histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBVal"
+    # image_path = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
+    # label_path = "C:/temp/ispipeline/labels/224xCropRGBTrain5/"
+    # histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBTrain5/"
+    # val_image_path = "C:/temp/ispipeline/images/224xCropRGBval20"
+    # val_label_path = "C:/temp/ispipeline/labels/224xCropRGBval20/"
+    # val_histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBval20/"
     # image_path = "C:/temp/ispipeline/images/224xSeqRGBTrain5/"
     # label_path = "C:/temp/ispipeline/labels/224xSeqRGBTrain5/"
     # histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBTrain5/"
@@ -27,7 +33,7 @@ class config:
     # val_label_path = "C:/temp/ispipeline/labels/224xSeqRGBval20/"
     # val_histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBval20/"
     image_size = 224
-    nclass = 6
+    nclass = 21
 
 wandb_logger = WandbLogger()
 datamodule = dataloaders.DataModuleCustom(
@@ -39,36 +45,10 @@ model = ghostnet.ghostnet(num_classes = config.nclass, enable_histlbp=True)
 # model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 loss = nn.CrossEntropyLoss()
-ex = experiment.Experiment(model, loss)
-trainer = pl.Trainer(max_epochs=56, accelerator='gpu', logger=wandb_logger)
+ex = experiment.Experiment(model, loss, config.nclass)
+trainer = pl.Trainer(max_epochs=300, accelerator='gpu', logger=wandb_logger)
 # %%
-import traceback
-try:
-    datamodule.setup()
-    trainer.fit(ex, train_dataloaders=datamodule)
-except Exception as err:
-    print(traceback.format_exc())
-torch.save(model.state_dict(), './model.pt')
-#%%%
-
-trainer.validate(ex, datamodule=datamodule, verbose=True)
-
-
-
-
-
-
-### USELESS
-# %%
-traindl = datamodule.train_dataloader()
-# %%
-batch = next(iter(traindl))
-# %%
-dataloader = dataloaders.DatasetLoader(
-    histlbppath=config.histlbp_path, imagepath=config.image_path, labelpath=config.label_path, nclass=config.nclass)
-
-x, i, y = dataloader.__getitem__(34)
-
-# %%
-model.forward((x[0][None, :], x[1][None, :]))
+datamodule.setup()
+trainer.fit(ex, train_dataloaders=datamodule)
+torch.save(model.state_dict(), './ghost_model.pt')
 # %%
