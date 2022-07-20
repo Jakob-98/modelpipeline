@@ -229,7 +229,7 @@ class GhostNet(nn.Module):
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.conv_head = nn.Conv2d(input_channel, output_channel, 1, 1, 0, bias=True)
         self.act2 = nn.ReLU(inplace=True)
-        self.classifier = nn.Linear(output_channel + self.histlbpoutdim + 804, num_classes)
+        self.classifier = nn.Linear(output_channel + self.histlbpoutdim, num_classes)
 
     def forward(self, x, z):
         x, lbphist = x, z
@@ -251,6 +251,7 @@ class GhostNet(nn.Module):
         if self.dropout> 0.:
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.classifier(x)
+        print(x.shape)
         return x
 
 

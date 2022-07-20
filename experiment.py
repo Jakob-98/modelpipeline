@@ -21,16 +21,16 @@ class Experiment(pl.LightningModule):
         self.model = model
         self.n_classes = n_classes
         self.loss = loss
-        self.val_confusion = ConfusionMatrix(num_classes=6)#self._config.n_clusters)
+        self.val_confusion = ConfusionMatrix(num_classes=n_classes)#self._config.n_clusters)
         self.train_acc = torchmetrics.Accuracy()
-        self.train_f1 = torchmetrics.F1Score(number_classes=6,
+        self.train_f1 = torchmetrics.F1Score(number_classes=n_classes,
         average="micro")
-        self.train_auroc = torchmetrics.AUROC(num_classes=6,
+        self.train_auroc = torchmetrics.AUROC(num_classes=n_classes,
         average="micro")
         self.val_acc = torchmetrics.Accuracy()
-        self.val_f1 = torchmetrics.F1Score(number_classes=6,
+        self.val_f1 = torchmetrics.F1Score(number_classes=n_classes,
         average="micro")
-        self.val_auroc = torchmetrics.AUROC(num_classes=6,
+        self.val_auroc = torchmetrics.AUROC(num_classes=n_classes,
         average="micro")
     
     def forward(self, input):

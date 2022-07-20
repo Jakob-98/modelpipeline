@@ -14,12 +14,12 @@ from pytorch_lightning.loggers import WandbLogger
 import torch
 
 class config:
-    image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBTrain5"
-    label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBTrain5"
-    histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBTrain5"
-    val_image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBVal"
-    val_label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBVal" 
-    val_histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBVal"
+    image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBTrain5\\"
+    label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBTrain5\\"
+    histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBTrain5\\"
+    val_image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBVal\\"
+    val_label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBVal\\" 
+    val_histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBVal\\"
     # image_path = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
     # label_path = "C:/temp/ispipeline/labels/224xCropRGBTrain5/"
     # histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBTrain5/"
