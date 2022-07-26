@@ -251,7 +251,6 @@ class GhostNet(nn.Module):
         if self.dropout> 0.:
             x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.classifier(x)
-        print(x.shape)
         return x
 
 

@@ -11,15 +11,22 @@ reload(experiment)
 import torch.nn as nn
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 import torch
 
 class config:
-    image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBTrain5\\"
-    label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBTrain5\\"
-    histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBTrain5\\"
-    val_image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBVal\\"
-    val_label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBVal\\" 
-    val_histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBVal\\"
+    image_path = r"/home/serlierj/datasets/ENA/images/ENA224xCropRGBTrain5/"
+    label_path = r"/home/serlierj/datasets/ENA/labels/ENA224xCropRGBTrain5/"
+    histlbp_path = r"/home/serlierj/datasets/ENA/histlbp/ENA224xCropRGBTrain5/"
+    val_image_path = r"/home/serlierj/datasets/ENA/images/ENA224xCropRGBVal/"
+    val_label_path = r"/home/serlierj/datasets/ENA/labels/ENA224xCropRGBVal/"
+    val_histlbp_path = r"/home/serlierj/datasets/ENA/histlbp/ENA224xCropRGBVal/"
+    # image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBTrain5\\"
+    # label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBTrain5\\"
+    # histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBTrain5\\"
+    # val_image_path = r"C:\temp\data_final\ENA\images\ENA224xCropRGBVal\\"
+    # val_label_path = r"C:\temp\data_final\ENA\labels\ENA224xCropRGBVal\\" 
+    # val_histlbp_path = r"C:\temp\data_final\ENA\histlbp\ENA224xCropRGBVal\\"
     # image_path = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
     # label_path = "C:/temp/ispipeline/labels/224xCropRGBTrain5/"
     # histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBTrain5/"
@@ -33,7 +40,7 @@ class config:
     # val_label_path = "C:/temp/ispipeline/labels/224xSeqRGBval20/"
     # val_histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBval20/"
     image_size = 224
-    nclass = 21
+    nclass = 6
 
 wandb_logger = WandbLogger()
 datamodule = dataloaders.DataModuleCustom(
@@ -46,7 +53,14 @@ model = ghostnet.ghostnet(num_classes = config.nclass, enable_histlbp=True)
 model.eval()
 loss = nn.CrossEntropyLoss()
 ex = experiment.Experiment(model, loss, config.nclass)
-trainer = pl.Trainer(max_epochs=300, accelerator='gpu', logger=wandb_logger)
+callbacks=[
+                     LearningRateMonitor(),
+                     ModelCheckpoint(save_top_k=2, 
+                                     dirpath =('./checkpoints'), 
+                                     monitor= "val_loss",
+                                     save_last= True),
+                 ]
+trainer = pl.Trainer(callbacks=callbacks, max_epochs=100, accelerator='gpu', logger=wandb_logger)
 # %%
 datamodule.setup()
 trainer.fit(ex, train_dataloaders=datamodule)

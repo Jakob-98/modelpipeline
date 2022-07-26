@@ -71,6 +71,7 @@ class Experiment(pl.LightningModule):
         # reset metrics
         self.val_acc.reset()
         self.val_f1.reset()
+        self.val_confusion.reset()
         # log metrics\
         self.log("val_loss", avg_loss, prog_bar=True)
         self.log("val_acc", avg_acc, prog_bar=True)
