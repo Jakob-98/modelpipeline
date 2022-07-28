@@ -8,10 +8,10 @@ import dual_dataloaders
 # from ghostnet import ghostnet
 import dual_ghostnet
 from importlib import reload
-import dual_experiment
+import experiment
 reload(dual_dataloaders)
 reload(dual_ghostnet)
-reload(dual_experiment)
+reload(experiment)
 # from experiment import Experiment
 
 
@@ -42,11 +42,11 @@ datamodule = dual_dataloaders.DataModuleCustom(
 
 # %%
 model = dual_ghostnet.DualGhostNet(num_classes=config.nclass)
-# model.load_state_dict(torch.load('./model.pt'))
+model.load_state_dict(torch.load('./checkpoints/ghostnet_test.pth'))
 # model.eval()
 loss = nn.CrossEntropyLoss()
-ex = dual_experiment.Experiment(model, loss)
-trainer = pl.Trainer(max_epochs=56, accelerator='gpu', logger=wandb_logger)
+ex = experiment.Experiment(model, loss, n_classes=config.nclass, dual_images=True)
+trainer = pl.Trainer(max_epochs=10, accelerator='gpu', logger=wandb_logger)
 # %%
 try:
     datamodule.setup()

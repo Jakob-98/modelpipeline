@@ -131,3 +131,5 @@ dmypy.json
 
 wandb/ 
 lightning_logs/
+trained_models/
+checkpoints/

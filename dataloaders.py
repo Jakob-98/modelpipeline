@@ -51,10 +51,11 @@ class DatasetLoader(Dataset):
         self.imageids = sorted([os.path.basename(p).split('.jpg')[0] for p in glob.glob(imagepath + '/*.jpg')])
 
     
-    def one_hot(self, x):
-        res = np.zeros(self.nclass)
-        res[x-1] = 1
-        return res
+    # one hot encoder:
+    def one_hot(self, label):
+        one_hot = np.zeros(self.nclass)
+        one_hot[label] = 1
+        return one_hot
 
     def __getitem__(self, index):
         imageId = self.imageids[index]

@@ -42,19 +42,18 @@ from kornia.augmentation import ColorJitter, RandomChannelShuffle, RandomHorizon
 
 
 class DatasetLoader(Dataset):
-    def __init__(self, transforms, imagepath1, imagepath2, labelpath, histlbppath, nclass):
-        self.imagepath1 = imagepath1
-        self.imagepath2 = imagepath2
+    def __init__(self, transforms, imagepath, labelpath, histlbppath, nclass):
+        self.imagepath = imagepath
         self.labelpath = labelpath
         self.histlbppath = histlbppath
         self.transforms = transforms
         self.nclass = nclass 
-        self.imageids = sorted([os.path.basename(p).split('.jpg')[0] for p in glob.glob(imagepath1 + '/*.jpg')])
+        self.imageids = sorted([os.path.basename(p).split('.jpg')[0] for p in glob.glob(imagepath + '/*.jpg')])
 
     
     def one_hot(self, x):
         res = np.zeros(self.nclass)
-        res[x] = 1
+        res[x-1] = 1
         return res
 
     def __getitem__(self, index):
@@ -63,12 +62,11 @@ class DatasetLoader(Dataset):
         with open(self.labelpath + imageId + '.txt') as f:
             target = f.readline()[0]
         target=self.one_hot(int(target))
-        img1 = np.array(Image.open(os.path.join(self.imagepath1, imageId + '.jpg')).convert('RGB'))
-        img2 = np.array(Image.open(os.path.join(self.imagepath2, imageId + '.jpg')).convert('RGB'))
-        img1, img2, target, histlbp = torch.Tensor(img1).permute(2,0,1), torch.Tensor(img2).permute(2,0,1), torch.Tensor(target), torch.Tensor(histlbp)
+        img = np.array(Image.open(os.path.join(self.imagepath, imageId + '.jpg')).convert('RGB'))
+        img, target, histlbp = torch.Tensor(img).permute(2,0,1), torch.Tensor(target), torch.Tensor(histlbp)
         # return img, target
-        img1, img2 = torch.squeeze(self.transforms(img1)), torch.squeeze(self.transforms(img2))
-        return img1, img2, histlbp, target 
+        img = torch.squeeze(self.transforms(img))
+        return img, histlbp, target 
 
 
     def __len__(self):
@@ -111,12 +109,10 @@ class DataModuleCustom(pl.LightningDataModule):
         nclass,
         trainhistlbppath,
         trainlabelpath,
-        trainimagepath1,
-        trainimagepath2,
+        trainimagepath,
         valhistlbppath,
         vallabelpath,
-        valimagepath1,
-        valimagepath2
+        valimagepath
     ):
         super().__init__()
         self.train_batch_size = 16
@@ -124,27 +120,25 @@ class DataModuleCustom(pl.LightningDataModule):
         self.nclass = nclass
         self.trainhistlbppath = trainhistlbppath
         self.trainlabelpath = trainlabelpath
-        self.trainimagepath1 = trainimagepath1
-        self.trainimagepath2 = trainimagepath2
+        self.trainimagepath = trainimagepath
         self.valhistlbppath = valhistlbppath
         self.vallabelpath = vallabelpath
-        self.valimagepath1 = valimagepath1
-        self.valimagepath2 = valimagepath2
+        self.valimagepath = valimagepath
         self.transform = DataAugmentation()
 
     def setup(self, stage: Optional[str] = None) -> None:
         
         self.num_workers = 4
         self.train_dataset = DatasetLoader(
-            transforms=self.transform, histlbppath=self.trainhistlbppath, imagepath2=self.trainimagepath2, imagepath1=self.trainimagepath1, labelpath=self.trainlabelpath, nclass=self.nclass
+            transforms=self.transform, histlbppath=self.trainhistlbppath, imagepath=self.trainimagepath, labelpath=self.trainlabelpath, nclass=self.nclass
         )
 
         self.val_dataset= DatasetLoader(
-            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath2=self.valimagepath2, imagepath1=self.valimagepath1, labelpath=self.vallabelpath, nclass=self.nclass
+            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath=self.valimagepath, labelpath=self.vallabelpath, nclass=self.nclass
         )
 
         self.test_dataset= DatasetLoader(
-            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath2=self.valimagepath2, imagepath1=self.valimagepath1, labelpath=self.vallabelpath, nclass=self.nclass
+            transforms=self.transform, histlbppath=self.valhistlbppath, imagepath=self.valimagepath, labelpath=self.vallabelpath, nclass=self.nclass
         )
 
 

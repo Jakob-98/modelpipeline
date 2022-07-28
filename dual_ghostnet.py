@@ -223,6 +223,7 @@ class GhostNet(nn.Module):
         self.conv_head = nn.Conv2d(input_channel, output_channel, 1, 1, 0, bias=True)
         self.act2 = nn.ReLU(inplace=True)
 
+
     def forward(self, x):
         x = self.conv_stem(x)
         x = self.bn1(x)
@@ -277,6 +278,9 @@ class DualGhostNet(nn.Module):
         self.ghostnet2 = ghostnet(num_classes=num_classes)
         self.classifier = nn.Linear(2560, num_classes)
 
+    def save_model(self, step):
+        torch.save(self.state_dict(), './checkpoints/ghostnet_' + str(step) + '.pth')
+        
     def forward(self, x1, x2):
         x1 = self.ghostnet1(x1)
         x2  = self.ghostnet2(x2)
