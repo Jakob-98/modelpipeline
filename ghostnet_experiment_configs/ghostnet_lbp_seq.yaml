@@ -1,0 +1,11 @@
+image_path : r"/home/serlierj/datasets/ENA/images/ENA224xCropRGBTrain5/"
+label_path : r"/home/serlierj/datasets/ENA/labels/ENA224xCropRGBTrain5/"
+histlbp_path : r"/home/serlierj/datasets/ENA/histlbp/ENA224xCropRGBTrain5/"
+val_image_path : r"/home/serlierj/datasets/ENA/images/ENA224xCropRGBVal/"
+val_label_path : r"/home/serlierj/datasets/ENA/labels/ENA224xCropRGBVal/"
+val_histlbp_path : r"/home/serlierj/datasets/ENA/histlbp/ENA224xCropRGBVal/"
+image_size : 224
+nclass : 6
+max_epochs : 10
+enable_histlbp : True
+ex_name: "dual_ghostnet"

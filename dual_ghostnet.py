@@ -279,7 +279,7 @@ class DualGhostNet(nn.Module):
         self.classifier = nn.Linear(2560, num_classes)
 
     def save_model(self, step):
-        torch.save(self.state_dict(), './checkpoints/ghostnet_' + str(step) + '.pth')
+        torch.save(self.state_dict(), './checkpoints/ghostnet_' + str(step) + '.pt')
         
     def forward(self, x1, x2):
         x1 = self.ghostnet1(x1)

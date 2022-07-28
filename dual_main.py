@@ -9,27 +9,48 @@ import dual_dataloaders
 import dual_ghostnet
 from importlib import reload
 import experiment
-reload(dual_dataloaders)
-reload(dual_ghostnet)
-reload(experiment)
+# reload(dual_dataloaders)
+# reload(dual_ghostnet)
+# reload(experiment)
 # from experiment import Experiment
 
 
+########################################################################################################################
+# standard argparser for config
+########################################################################################################################
+
+import argparse, yaml
+
+parser = argparse.ArgumentParser(description='Configure a jconfig')
+parser.add_argument('-c', '--config', help='Config .yaml file path', type=str, default='./config.yaml')
+args = parser.parse_args()
+
+# Load config file
+with open(args.config, 'r') as f:
+    configyaml = yaml.load(f, Loader=yaml.FullLoader)
+
 class config:
-    image_path1 = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
-    label_path = "C:/temp/ispipeline/labels/224xCropRGBTrain5/"
-    histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBTrain5/"
-    val_image_path1 = "C:/temp/ispipeline/images/224xCropRGBval20"
-    val_label_path = "C:/temp/ispipeline/labels/224xCropRGBval20/"
-    val_histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBval20/"
-    image_path2 = "C:/temp/ispipeline/images/224xSeqRGBTrain5/"
-    # label_path = "C:/temp/ispipeline/labels/224xSeqRGBTrain5/"
-    # histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBTrain5/"
-    val_image_path2 = "C:/temp/ispipeline/images/224xSeqRGBval20"
-    # val_label_path = "C:/temp/ispipeline/labels/224xSeqRGBval20/"
-    # val_histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBval20/"
-    image_size = 224
-    nclass = 6
+    for key, value in configyaml.items():
+        locals()[key] = value
+
+########################################################################################################################
+# main
+
+# class config:
+#     image_path1 = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
+#     label_path = "C:/temp/ispipeline/labels/224xCropRGBTrain5/"
+#     histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBTrain5/"
+#     val_image_path1 = "C:/temp/ispipeline/images/224xCropRGBval20"
+#     val_label_path = "C:/temp/ispipeline/labels/224xCropRGBval20/"
+#     val_histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBval20/"
+#     image_path2 = "C:/temp/ispipeline/images/224xSeqRGBTrain5/"
+#     # label_path = "C:/temp/ispipeline/labels/224xSeqRGBTrain5/"
+#     # histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBTrain5/"
+#     val_image_path2 = "C:/temp/ispipeline/images/224xSeqRGBval20"
+#     # val_label_path = "C:/temp/ispipeline/labels/224xSeqRGBval20/"
+#     # val_histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBval20/"
+#     image_size = 224
+#     nclass = 6
 
 
 wandb_logger = WandbLogger()

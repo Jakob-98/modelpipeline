@@ -95,7 +95,9 @@ class Experiment(pl.LightningModule):
 
 
     def validation_epoch_end(self, outputs):
-        self.model.save_model('test')
+        # TODO beun: fix counting proper model savepoints
+        self.model.save_model(str(len(outputs)))
+
         avg_loss = torch.stack([x["val_loss"] for x in outputs]).mean()
         avg_acc = self.val_acc.compute()
         avg_f1 = self.val_f1.compute()
