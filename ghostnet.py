@@ -232,7 +232,7 @@ class GhostNet(nn.Module):
         self.classifier = nn.Linear(output_channel + self.histlbpoutdim, num_classes)
 
     def save_model(self, step):
-        torch.save(self.state_dict(), './checkpoints/ghostnet_' + str(step) + '.pt')
+        torch.save(self.state_dict(), './ghostnet_' + str(step) + '.pt')
 
     def forward(self, x, z):
         x, lbphist = x, z

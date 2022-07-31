@@ -1,19 +1,19 @@
 # %%
-import traceback
-import torch
-from pytorch_lightning.loggers import WandbLogger
-import pytorch_lightning as pl
-import torch.nn as nn
-import dual_dataloaders
+import dataloaders
 # from ghostnet import ghostnet
 import dual_ghostnet
+import dual_dataloaders
 from importlib import reload
 import experiment
-# reload(dual_dataloaders)
-# reload(dual_ghostnet)
+# reload(dataloaders)
+# reload(ghostnet)
 # reload(experiment)
 # from experiment import Experiment
-
+import torch.nn as nn
+import pytorch_lightning as pl
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+import torch
 
 ########################################################################################################################
 # standard argparser for config
@@ -33,25 +33,9 @@ class config:
     for key, value in configyaml.items():
         locals()[key] = value
 
+print(config.image_path1)
 ########################################################################################################################
 # main
-
-# class config:
-#     image_path1 = "C:/temp/ispipeline/images/224xCropRGBTrain5/"
-#     label_path = "C:/temp/ispipeline/labels/224xCropRGBTrain5/"
-#     histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBTrain5/"
-#     val_image_path1 = "C:/temp/ispipeline/images/224xCropRGBval20"
-#     val_label_path = "C:/temp/ispipeline/labels/224xCropRGBval20/"
-#     val_histlbp_path = "C:/temp/ispipeline/histlbp/224xCropRGBval20/"
-#     image_path2 = "C:/temp/ispipeline/images/224xSeqRGBTrain5/"
-#     # label_path = "C:/temp/ispipeline/labels/224xSeqRGBTrain5/"
-#     # histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBTrain5/"
-#     val_image_path2 = "C:/temp/ispipeline/images/224xSeqRGBval20"
-#     # val_label_path = "C:/temp/ispipeline/labels/224xSeqRGBval20/"
-#     # val_histlbp_path = "C:/temp/ispipeline/histlbp/224xSeqRGBval20/"
-#     image_size = 224
-#     nclass = 6
-
 
 wandb_logger = WandbLogger()
 datamodule = dual_dataloaders.DataModuleCustom(
@@ -60,16 +44,16 @@ datamodule = dual_dataloaders.DataModuleCustom(
     valhistlbppath=config.val_histlbp_path, valimagepath1=config.val_image_path1,
     valimagepath2=config.val_image_path2, vallabelpath=config.val_label_path,
     nclass=config.nclass)
-
 # %%
 model = dual_ghostnet.DualGhostNet(num_classes=config.nclass)
-
+model.load_state_dict(torch.load(config.ptpath))
 model.eval()
 loss = nn.CrossEntropyLoss()
 ex = experiment.Experiment(model, loss, config.nclass, dual_images=True)
-trainer = pl.Trainer(max_epochs=config.max_epochs, accelerator='gpu', logger=wandb_logger)
+trainer = pl.Trainer(max_epochs=1, accelerator='gpu', logger=wandb_logger)
 # %%
 datamodule.setup()
-trainer.fit(ex, train_dataloaders=datamodule)
-torch.save(model.state_dict(), f'./{config.ex_name}_final_model.pt')
+trainer.validate(ex, dataloaders=datamodule)
+# torch.save(model.state_dict(), './ghost_model.pt')
 # %%
+

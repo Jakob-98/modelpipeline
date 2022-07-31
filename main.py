@@ -32,6 +32,7 @@ class config:
     for key, value in configyaml.items():
         locals()[key] = value
 
+print(config.image_path)
 ########################################################################################################################
 # main
 
