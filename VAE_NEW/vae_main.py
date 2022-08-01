@@ -39,12 +39,14 @@ exp_params = {
 }
 
 class config:
-    max_epochs = 10,
-    ex_name =  'VAE',
-    train_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBTrain5/', 
-    val_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBVal20/', 
-    test_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBTest20/'
-    
+    max_epochs = 200
+    ex_name =  'VAE'
+    # train_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBTrain5/', 
+    # val_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBVal20/', 
+    # test_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBTest20/'
+    train_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBTrain5' 
+    val_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBVal20' 
+    test_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBTest20'
 
 # %%
 class CustomDataset(Dataset):
