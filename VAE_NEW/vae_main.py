@@ -39,14 +39,14 @@ exp_params = {
 }
 
 class config:
-    max_epochs = 200
+    max_epochs = 10
     ex_name =  'VAE'
-    # train_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBTrain5/', 
-    # val_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBVal20/', 
-    # test_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBTest20/'
-    train_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBTrain5' 
-    val_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBVal20' 
-    test_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBTest20'
+    train_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBTrain5/'
+    val_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBVal20/' 
+    test_dir= 'C:/temp/data_final/islands/images/ISL64xSeqRGBTest20/'
+    # train_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBTrain5' 
+    # val_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBVal20' 
+    # test_dir= '/home/serlierj/datasets/islands/images/ISL64xSeqRGBTest20'
 
 # %%
 class CustomDataset(Dataset):
@@ -108,9 +108,9 @@ class VAEDataset(pl.LightningDataModule):
     ):
         super().__init__()
         print('!WARNING: hardcoded size')
-        self.train_dir = train_dir,
-        self.val_dir = val_dir,
-        self.test_dir = test_dir,        
+        self.train_dir = train_dir
+        self.val_dir = val_dir
+        self.test_dir = test_dir        
         self.train_batch_size = train_batch_size
         self.val_batch_size = val_batch_size
         self.patch_size = patch_size
@@ -131,22 +131,18 @@ class VAEDataset(pl.LightningDataModule):
         
         self.train_dataset = CustomDataset(
             self.train_dir,
-            # split='train',
             transform=train_transforms
-            # download=False,
         )
         
         # Replace CelebA with your dataset
         self.val_dataset = CustomDataset(
             self.val_dir,
             transform=val_transforms
-            # download=False,
         )
 
         self.test_dataset = CustomDataset(
             self.test_dir,
             transform=val_transforms
-            # download=False,
         )
         
     def train_dataloader(self) -> DataLoader:
